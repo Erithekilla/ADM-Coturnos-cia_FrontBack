@@ -1,0 +1,229 @@
+# ==============================================================================
+# Gitignore Global - Projeto Coturnos (Backend API + Front-end Admin)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Variáveis de Ambiente e Arquivos de Configuração Sensíveis
+# ------------------------------------------------------------------------------
+.env
+.env.*
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.backup
+.env.bak
+.env.old
+.env.save
+.env.temp
+.env.tmp
+.envrc
+.env.vault
+.env.keys
+*.env
+*.env.*
+
+# Manter arquivos de exemplo e templates
+!.env.example
+!.env.*.example
+!*.env.example
+
+# ------------------------------------------------------------------------------
+# 2. Chaves Criptográficas, Certificados e SSH (Segurança Crítica)
+# ------------------------------------------------------------------------------
+*.pem
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pkcs12
+*.crt
+*.cer
+*.der
+*.csr
+*.pub
+oauth-private.key
+oauth-public.key
+
+# Chaves SSH e arquivos de autenticação de host
+id_rsa*
+id_dsa*
+id_ed25519*
+id_ecdsa*
+known_hosts*
+authorized_keys*
+
+# ------------------------------------------------------------------------------
+# 3. Credenciais de Serviços em Nuvem e Terceiros (AWS, GCP, Firebase, etc.)
+# ------------------------------------------------------------------------------
+.aws/
+*aws-credentials*
+*service-account*.json
+*serviceAccount*.json
+firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
+credentials.json
+client_secret*.json
+client_secrets*.json
+secret*.json
+secret*.yml
+secret*.yaml
+secrets/
+.azure/
+.wrangler/
+.vercel
+.netlify
+*.tfvars
+*.tfvars.json
+*.tfstate
+*.tfstate.*
+
+# ------------------------------------------------------------------------------
+# 4. Credenciais de Gerenciadores de Pacotes e Registries
+# ------------------------------------------------------------------------------
+auth.json
+.npmrc.local
+.npmrc-backup
+.yarnrc.local
+.pypirc
+.netrc
+
+# ------------------------------------------------------------------------------
+# 5. Bancos de Dados, Dumps e Backups (LGPD e Prevenção de Vazamento de Dados)
+# ------------------------------------------------------------------------------
+*.sql
+*.sql.gz
+*.sql.bz2
+*.sql.tar.gz
+*.dump
+*.dmp
+*.rdb
+*.sqlite
+*.sqlite-journal
+*.sqlite3
+*.db
+*.db-journal
+backend-api/database/*.sqlite
+backend-api/database/*.sqlite-journal
+
+# ------------------------------------------------------------------------------
+# 6. Arquivos de Backup, Temporários e Swaps
+# ------------------------------------------------------------------------------
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*.patch
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+*.swn
+
+# ------------------------------------------------------------------------------
+# 7. Logs e Depuração (Evitar vazamento de tokens e stack traces)
+# ------------------------------------------------------------------------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# 8. Sistema Operacional
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# 9. IDEs, Editores e Histórico Local
+# ------------------------------------------------------------------------------
+.history/
+.idea/
+.fleet/
+.zed/
+.nova/
+.cursor/
+.codex/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# VS Code - Ignorar histórico e configurações de usuário, preservar padrões do time
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ------------------------------------------------------------------------------
+# 10. Dependências e Gerenciadores de Pacotes
+# ------------------------------------------------------------------------------
+node_modules/
+vendor/
+.pnp
+.pnp.js
+
+# ------------------------------------------------------------------------------
+# 11. Backend API (Laravel / PHP)
+# ------------------------------------------------------------------------------
+backend-api/storage/*.key
+backend-api/storage/oauth-*.key
+backend-api/storage/pail
+backend-api/storage/logs/*
+!backend-api/storage/logs/.gitignore
+backend-api/storage/framework/cache/data/*
+!backend-api/storage/framework/cache/data/.gitignore
+backend-api/storage/framework/sessions/*
+!backend-api/storage/framework/sessions/.gitignore
+backend-api/storage/framework/testing/*
+!backend-api/storage/framework/testing/.gitignore
+backend-api/storage/framework/views/*
+!backend-api/storage/framework/views/.gitignore
+backend-api/storage/app/private/*
+!backend-api/storage/app/private/.gitignore
+backend-api/storage/app/public/*
+!backend-api/storage/app/public/.gitignore
+
+backend-api/bootstrap/cache/*.php
+!backend-api/bootstrap/cache/.gitignore
+backend-api/public/storage
+backend-api/public/hot
+backend-api/public/build
+backend-api/public/fonts-manifest.dev.json
+backend-api/.phpunit.result.cache
+backend-api/.phpunit.cache
+backend-api/_ide_helper.php
+backend-api/.phpactor.json
+backend-api/Homestead.json
+backend-api/Homestead.yaml
+
+# ------------------------------------------------------------------------------
+# 12. Front-end Admin (React / Vite / TypeScript)
+# ------------------------------------------------------------------------------
+dist/
+dist-ssr/
+build/
+*.local
+front-end\ admin/**/dist/
+front-end\ admin/**/dist-ssr/
+front-end\ admin/**/.eslintcache
+front-end\ admin/**/.tsbuildinfo
+.eslintcache
+*.tsbuildinfo
