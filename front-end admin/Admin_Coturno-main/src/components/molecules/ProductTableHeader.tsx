@@ -6,6 +6,7 @@ export const ProductTableHeader: React.FC = () => {
     'TIPO', 
     'MARCA / MODELO', 
     'PREÇO', 
+    'PREÇO DE CUSTO', 
     'ESTOQUE', 
     'TAMANHOS', 
     'COR', 

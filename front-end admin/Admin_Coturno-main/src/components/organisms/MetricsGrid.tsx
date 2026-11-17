@@ -23,18 +23,17 @@ const iconMap: Record<string, React.ComponentType<IconProps>> = {
 };
 
 export const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
-  const defaultMetrics: MetricItem[] = [
-    { id: 'receita', label: 'Receita Total', value: 'R$ 0,00', trend: 12.5, bgColor: 'bg-army' },
-    { id: 'pedidos', label: 'Pedidos Realizados', value: '0', trend: 8.2, bgColor: 'bg-marrom' },
-    { id: 'estoque', label: 'Produtos em Estoque', value: '0', trend: 3.1, bgColor: 'bg-azul' },
-    { id: 'clientes', label: 'Clientes Ativos', value: '0', trend: 15.3, bgColor: 'bg-preto' },
-  ];
-
-  const items = metrics && metrics.length > 0 ? metrics : defaultMetrics;
+  if (!metrics || metrics.length === 0) {
+    return (
+      <div className="w-full p-4 mb-2 bg-white rounded-xl border border-slate-200 text-center text-sm text-slate-400">
+        Nenhuma métrica disponível no banco de dados.
+      </div>
+    );
+  }
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-2">
-      {items.map((metric) => {
+      {metrics.map((metric) => {
         const IconComponent = metric.icon || iconMap[metric.id] || BoxIcon;
         return (
           <MetricCard

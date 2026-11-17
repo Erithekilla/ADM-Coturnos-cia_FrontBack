@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Usuario;
-use App\Models\Produto;
-use App\Models\Pedido;
-use App\Models\ItensPedido;
-use App\Models\TamanhoProduto;
+use App\Models\User;
+use App\Models\Product;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\ProductSize;
+use App\Models\ProductPrice;
 use App\Models\AuditLog;
+use App\Support\Hashid;
+use App\Support\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,232 +18,206 @@ use Illuminate\Support\Facades\Cache;
 
 class AdminDashboardController extends Controller
 {
+    /** Chave do cache das métricas; o OrderObserver limpa quando um pedido muda. */
+    public const CACHE_KEY = 'metrics_dashboard';
+
     /**
      * GET /api/v1/admin/dashboard
-     * Métricas consolidadas com cache de 5 minutos (300 segundos),
-     * comparativo mensal de faturamento, pedidos por status, top 5 coturnos e alerta de estoque crítico.
+     *
+     * Todas as métricas de venda usam SOMENTE pedidos aprovados
+     * (OrderStatus::APPROVED = paid, preparing, shipped, delivered).
+     * Pendentes e cancelados não entram em receita, contagem de pedidos,
+     * vendas mensais, top produtos nem clientes.
      */
     public function dashboard(): JsonResponse
     {
-        $dados = Cache::remember('metrics_dashboard', 300, function () {
-            // 1. Faturamento mês atual vs mês anterior com cálculo de % real
-            $agora = now();
-            $mesAtual = $agora->month;
-            $anoAtual = $agora->year;
+        $dados = Cache::remember(self::CACHE_KEY, 60, function () {
+            $aprovados = fn () => Order::query()->whereIn('status', OrderStatus::APPROVED);
 
-            $dataMesPassado = now()->subMonth();
-            $mesAnterior = $dataMesPassado->month;
-            $anoAnterior = $dataMesPassado->year;
+            $inicioMes = now()->startOfMonth();
+            $fimMes = now()->endOfMonth();
+            $inicioMesAnterior = now()->subMonthNoOverflow()->startOfMonth();
+            $fimMesAnterior = now()->subMonthNoOverflow()->endOfMonth();
 
-            $faturamentoMesAtual = (float) Pedido::whereMonth('data_pedido', $mesAtual)
-                ->whereYear('data_pedido', $anoAtual)
-                ->whereNotIn('status', ['cancelado', 'Cancelado'])
-                ->sum('valor_total');
+            // 1. Receita (total dos pedidos aprovados) e comparação com o mês anterior
+            $receitaTotal = (float) $aprovados()->sum('total_amount');
+            $receitaMesAtual = (float) $aprovados()->whereBetween('created_at', [$inicioMes, $fimMes])->sum('total_amount');
+            $receitaMesAnterior = (float) $aprovados()->whereBetween('created_at', [$inicioMesAnterior, $fimMesAnterior])->sum('total_amount');
 
-            $faturamentoMesAnterior = (float) Pedido::whereMonth('data_pedido', $mesAnterior)
-                ->whereYear('data_pedido', $anoAnterior)
-                ->whereNotIn('status', ['cancelado', 'Cancelado'])
-                ->sum('valor_total');
+            // 2. Pedidos aprovados e comparação com o mês anterior
+            $totalPedidos = $aprovados()->count();
+            $pedidosMesAtual = $aprovados()->whereBetween('created_at', [$inicioMes, $fimMes])->count();
+            $pedidosMesAnterior = $aprovados()->whereBetween('created_at', [$inicioMesAnterior, $fimMesAnterior])->count();
 
-            $faturamentoTotal = (float) Pedido::whereNotIn('status', ['cancelado', 'Cancelado'])->sum('valor_total');
-            if ($faturamentoTotal == 0) {
-                $faturamentoTotal = (float) DB::table('precos')
-                    ->join('tamanho_produtos', 'precos.produtos_id', '=', 'tamanho_produtos.produtos_id')
-                    ->sum(DB::raw('precos.preco * (tamanho_produtos.quantidade / 7)'));
+            // 3. Clientes que têm ao menos um pedido aprovado
+            $totalClientes = $aprovados()->distinct()->count('user_id');
+            $clientesMesAtual = $aprovados()->whereBetween('created_at', [$inicioMes, $fimMes])->distinct()->count('user_id');
+            $clientesMesAnterior = $aprovados()->whereBetween('created_at', [$inicioMesAnterior, $fimMesAnterior])->distinct()->count('user_id');
+
+            // 4. Estoque (não depende de pedido): unidades de produtos não excluídos
+            $totalEstoque = (int) DB::table('product_sizes')
+                ->join('products', 'products.id', '=', 'product_sizes.product_id')
+                ->whereNull('products.deleted_at')
+                ->sum('product_sizes.stock');
+
+            $estoqueCriticoItens = ProductSize::with('product')
+                ->where('stock', '<', 5)
+                ->whereHas('product') // SoftDeletes já ignora os excluídos
+                ->get()
+                ->map(fn ($t) => [
+                    'produtoId' => Product::encodeId((int) $t->product_id),
+                    'nome' => $t->product?->name ?: ($t->product?->model ?: 'Coturno sem nome'),
+                    'tamanho' => $t->size,
+                    'quantidade' => (int) $t->stock,
+                ])
+                ->values();
+
+            // 5. Vendas mensais do ano corrente (somente aprovados)
+            $mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            $porMes = array_fill(1, 12, ['vendas' => 0.0, 'pedidos' => 0]);
+
+            $aprovados()
+                ->whereBetween('created_at', [now()->startOfYear(), now()->endOfYear()])
+                ->get(['created_at', 'total_amount'])
+                ->each(function ($o) use (&$porMes) {
+                    $m = (int) $o->created_at->month;
+                    $porMes[$m]['vendas'] += (float) $o->total_amount;
+                    $porMes[$m]['pedidos']++;
+                });
+
+            $vendasMensais = [];
+            foreach ($porMes as $m => $v) {
+                $vendasMensais[] = [
+                    'mes' => $mesesNomes[$m - 1],
+                    'vendas' => round($v['vendas'], 2),
+                    'pedidos' => $v['pedidos'],
+                ];
             }
 
-            $trendReceita = 0.0;
-            if ($faturamentoMesAnterior > 0) {
-                $trendReceita = round((($faturamentoMesAtual - $faturamentoMesAnterior) / $faturamentoMesAnterior) * 100, 1);
-            } elseif ($faturamentoMesAtual > 0) {
-                $trendReceita = 100.0;
-            } else {
-                $trendReceita = 12.5; // fallback informativo
-            }
-
-            // 2. Contagem de pedidos por status
-            $pedidosPorStatusRaw = Pedido::select('status', DB::raw('COUNT(*) as total'))
+            // 6. Pedidos por status (distribuição de todos os pedidos, para acompanhamento)
+            $contagem = Order::query()->select('status', DB::raw('COUNT(*) as total'))
                 ->groupBy('status')
                 ->pluck('total', 'status')
                 ->toArray();
-
-            $statusPadroes = ['pendente', 'pago', 'em_separacao', 'enviado', 'entregue', 'cancelado'];
             $pedidosPorStatus = [];
-            foreach ($statusPadroes as $st) {
-                $pedidosPorStatus[$st] = $pedidosPorStatusRaw[$st] ?? $pedidosPorStatusRaw[ucfirst($st)] ?? 0;
+            foreach (OrderStatus::ALL as $st) {
+                $pedidosPorStatus[$st] = (int) ($contagem[$st] ?? 0);
             }
 
-            // 3. Alerta de estoque crítico (< 5 unidades)
-            $estoqueCriticoItens = TamanhoProduto::with('produto')
-                ->where('quantidade', '<', 5)
-                ->whereHas('produto', function ($q) {
-                    $q->whereNull('excluido')->orWhereRaw("TRIM(UPPER(COALESCE(excluido, 'N'))) != 'S'");
-                })
-                ->get()
-                ->map(function ($t) {
-                    return [
-                        'produtoId' => $t->produtos_id,
-                        'nome' => $t->produto?->modelo ?: 'Coturno #' . $t->produtos_id,
-                        'tamanho' => $t->tamanho,
-                        'quantidade' => (int) $t->quantidade,
-                    ];
-                });
-
-            // 4. Métricas Gerais
-            $totalClientes = Usuario::where('role', 'cliente')->count();
-            $totalPedidos = Pedido::count();
-            $totalEstoque = (int) TamanhoProduto::sum('quantidade');
-
-            // 5. Vendas mensais estruturadas (12 meses)
-            $mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-            $vendasMensais = [];
-
-            $pedidosPorMes = Pedido::select(
-                DB::raw('MONTH(data_pedido) as mes_num'),
-                DB::raw('SUM(valor_total) as total_vendas')
-            )
-            ->whereNotNull('data_pedido')
-            ->whereNotIn('status', ['cancelado', 'Cancelado'])
-            ->groupBy(DB::raw('MONTH(data_pedido)'))
-            ->pluck('total_vendas', 'mes_num')
-            ->toArray();
-
-            $qtdPedidosPorMes = Pedido::select(
-                DB::raw('MONTH(data_pedido) as mes_num'),
-                DB::raw('COUNT(*) as total_pedidos')
-            )
-            ->whereNotNull('data_pedido')
-            ->groupBy(DB::raw('MONTH(data_pedido)'))
-            ->pluck('total_pedidos', 'mes_num')
-            ->toArray();
-
-            for ($i = 1; $i <= 12; $i++) {
-                $vendasMensais[] = [
-                    'mes' => $mesesNomes[$i - 1],
-                    'vendas' => isset($pedidosPorMes[$i]) ? (float) $pedidosPorMes[$i] : 0,
-                    'pedidos' => isset($qtdPedidosPorMes[$i]) ? (int) $qtdPedidosPorMes[$i] : 0
-                ];
-            }
-
-            // 6. Categorias
+            // 7. Produtos por categoria (composição do catálogo, não depende de venda)
             $cores = ['#142952', '#000000', '#4a5c3a', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
             $textClasses = ['text-azul', 'text-preto', 'text-army', 'text-blue-500', 'text-rose-500', 'text-emerald-500', 'text-amber-500', 'text-purple-500'];
 
-            $produtosPorTipo = Produto::select('tipo_do_produto', DB::raw('COUNT(*) as total'))
-                ->where(function ($q) {
-                    $q->whereNull('excluido')->orWhereRaw("TRIM(UPPER(COALESCE(excluido, 'N'))) != 'S'");
-                })
-                ->groupBy('tipo_do_produto')
+            $produtosPorTipo = Product::query()
+                ->select('product_type', DB::raw('COUNT(*) as total'))
+                ->groupBy('product_type')
                 ->get();
-
-            $totalProdutos = Produto::where(function ($q) {
-                $q->whereNull('excluido')->orWhereRaw("TRIM(UPPER(COALESCE(excluido, 'N'))) != 'S'");
-            })->count();
+            $totalProdutos = (int) $produtosPorTipo->sum('total');
 
             $categorias = [];
-            $colorIndex = 0;
-            foreach ($produtosPorTipo as $tipoItem) {
-                $nomeOriginal = $tipoItem->tipo_do_produto ?? 'Geral';
-                $nome = ucwords(str_replace('-', ' ', $nomeOriginal));
+            foreach ($produtosPorTipo->values() as $i => $tipoItem) {
                 $qtd = (int) $tipoItem->total;
-                $pct = $totalProdutos > 0 ? round(($qtd / $totalProdutos) * 100) : 0;
-
                 $categorias[] = [
-                    'nome' => $nome,
+                    'nome' => ucwords(str_replace('-', ' ', $tipoItem->product_type ?? 'Geral')),
                     'quantidade' => $qtd,
-                    'porcentagem' => $pct,
-                    'cor' => $cores[$colorIndex % count($cores)],
-                    'classesTexto' => $textClasses[$colorIndex % count($textClasses)]
+                    'porcentagem' => $totalProdutos > 0 ? (int) round(($qtd / $totalProdutos) * 100) : 0,
+                    'cor' => $cores[$i % count($cores)],
+                    'classesTexto' => $textClasses[$i % count($textClasses)],
                 ];
-                $colorIndex++;
             }
 
-            // 7. Top 5 coturnos mais vendidos com fotos
-            $topVendasRaw = DB::table('itens_pedidos')
-                ->select('produtos_id', DB::raw('SUM(quantidade) as total_vendas'))
-                ->groupBy('produtos_id')
-                ->orderByDesc('total_vendas')
-                ->take(5)
-                ->pluck('total_vendas', 'produtos_id')
-                ->toArray();
-
-            $topProdutosDb = Produto::with(['precos', 'tamanhos', 'imagens'])
-                ->where(function ($q) {
-                    $q->whereNull('excluido')->orWhereRaw("TRIM(UPPER(COALESCE(excluido, 'N'))) != 'S'");
-                })
-                ->take(5)
+            // 8. Top 5 produtos mais vendidos em pedidos aprovados (vendas e receita reais)
+            $topVendas = DB::table('order_items')
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->whereIn('orders.status', OrderStatus::APPROVED)
+                ->groupBy('order_items.product_id')
+                ->selectRaw('order_items.product_id, SUM(order_items.quantity) as vendas, SUM(order_items.subtotal) as receita, MAX(order_items.product_name) as nome_na_venda')
+                ->orderByDesc('vendas')
+                ->limit(5)
                 ->get();
 
-            $topProdutos = [];
-            foreach ($topProdutosDb as $prod) {
-                $preco = (float) ($prod->precos->first()->preco ?? 0);
-                $estoque = (int) $prod->tamanhos->sum('quantidade');
-                $vendas = $topVendasRaw[$prod->id] ?? max(1, (int) round($estoque / 10));
-                $receita = $vendas * $preco;
-                $foto = $prod->imagens->first()->url_imagem ?? '/coturno1.jpeg';
+            // inclui produtos já excluídos: a venda aconteceu
+            $produtos = Product::withTrashed()->with('images')
+                ->whereIn('id', $topVendas->pluck('product_id'))
+                ->get()
+                ->keyBy('id');
 
-                $topProdutos[] = [
-                    'id' => $prod->id,
-                    'name' => $prod->modelo ?: 'Coturno #' . $prod->id,
-                    'sales' => (int) $vendas,
-                    'revenue' => 'R$ ' . number_format($receita, 2, ',', '.'),
+            $topProdutos = $topVendas->map(function ($row) use ($produtos) {
+                $prod = $produtos->get($row->product_id);
+                $foto = $prod?->images->first()->image_url ?? '/coturno1.jpeg';
+
+                return [
+                    'id' => Product::encodeId((int) $row->product_id),
+                    'name' => $prod?->name ?: ($row->nome_na_venda ?: ($prod?->model ?: 'Coturno sem nome')),
+                    'sales' => (int) $row->vendas,
+                    'revenue' => 'R$ ' . number_format((float) $row->receita, 2, ',', '.'),
                     'rating' => 4.8,
                     'foto' => $foto,
                     'image' => $foto,
                 ];
-            }
+            })->values();
 
             return [
                 'metrics' => [
                     [
                         'id' => 'receita',
-                        'label' => 'Receita Total',
-                        'value' => 'R$ ' . number_format($faturamentoTotal, 2, ',', '.'),
-                        'trend' => $trendReceita,
-                        'bgColor' => 'bg-army'
+                        'label' => 'Receita (Pedidos Aprovados)',
+                        'value' => 'R$ ' . number_format($receitaTotal, 2, ',', '.'),
+                        'trend' => $this->variacao($receitaMesAtual, $receitaMesAnterior),
+                        'bgColor' => 'bg-army',
                     ],
                     [
                         'id' => 'pedidos',
-                        'label' => 'Pedidos Realizados',
+                        'label' => 'Pedidos Aprovados',
                         'value' => number_format($totalPedidos, 0, ',', '.'),
-                        'trend' => 8.2,
-                        'bgColor' => 'bg-marrom'
+                        'trend' => $this->variacao($pedidosMesAtual, $pedidosMesAnterior),
+                        'bgColor' => 'bg-marrom',
                     ],
                     [
                         'id' => 'estoque',
                         'label' => 'Produtos em Estoque',
                         'value' => number_format($totalEstoque, 0, ',', '.'),
-                        'trend' => 3.1,
-                        'bgColor' => 'bg-azul'
+                        'trend' => 0.0,
+                        'bgColor' => 'bg-azul',
                     ],
                     [
                         'id' => 'clientes',
-                        'label' => 'Clientes Ativos',
+                        'label' => 'Clientes com Compra Aprovada',
                         'value' => number_format($totalClientes, 0, ',', '.'),
-                        'trend' => 15.3,
-                        'bgColor' => 'bg-preto'
+                        'trend' => $this->variacao($clientesMesAtual, $clientesMesAnterior),
+                        'bgColor' => 'bg-preto',
                     ],
                 ],
                 'faturamentoComparativo' => [
-                    'mesAtual' => $faturamentoMesAtual,
-                    'mesAnterior' => $faturamentoMesAnterior,
-                    'variacaoPercentual' => $trendReceita,
+                    'mesAtual' => $receitaMesAtual,
+                    'mesAnterior' => $receitaMesAnterior,
+                    'variacaoPercentual' => $this->variacao($receitaMesAtual, $receitaMesAnterior),
                 ],
                 'pedidosPorStatus' => $pedidosPorStatus,
                 'estoqueCritico' => [
                     'totalCriticos' => $estoqueCriticoItens->count(),
-                    'itens' => $estoqueCriticoItens
+                    'itens' => $estoqueCriticoItens,
                 ],
                 'vendasMensais' => $vendasMensais,
                 'categorias' => $categorias,
-                'topProdutos' => $topProdutos
+                'topProdutos' => $topProdutos,
             ];
         });
 
         return response()->json([
             'status' => 'success',
-            'data' => $dados
+            'data' => $dados,
         ], 200);
+    }
+
+    /** Variação percentual mês atual x mês anterior. */
+    private function variacao(float $atual, float $anterior): float
+    {
+        if ($anterior > 0) {
+            return round((($atual - $anterior) / $anterior) * 100, 1);
+        }
+
+        return $atual > 0 ? 100.0 : 0.0;
     }
 
     /**
@@ -250,57 +227,24 @@ class AdminDashboardController extends Controller
     {
         $auditLogs = AuditLog::orderBy('id', 'desc')->take(50)->get();
 
-        if ($auditLogs->isNotEmpty()) {
-            $formatted = $auditLogs->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'user' => $log->autor,
-                    'action' => ($log->detalhes ?: "Ação em {$log->tabela} (#{$log->registro_id})"),
-                    'type' => $log->acao,
-                    'timestamp' => $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : date('Y-m-d H:i:s'),
-                ];
-            });
+        $formatted = $auditLogs->map(function ($log) {
+            // IDs sempre cifrados, inclusive dentro dos textos exibidos no painel
+            $adminRef = $log->admin_user_id ? User::encodeId((int) $log->admin_user_id) : null;
+            $legacyRef = ($log->registro_id && $log->tabela) ? Hashid::encode((int) $log->registro_id, (string) $log->tabela) : null;
 
-            return response()->json([
-                'status' => 'success',
-                'data' => $formatted
-            ], 200);
-        }
-
-        // Fallback dinâmico caso audit_logs ainda não tenha eventos suficientes
-        $logs = [];
-        $logId = 1;
-
-        $usuarios = Usuario::orderBy('data_criacao', 'desc')->take(10)->get();
-        foreach ($usuarios as $u) {
-            $dataHora = $u->data_criacao ? date('Y-m-d H:i:s', strtotime($u->data_criacao)) : date('Y-m-d H:i:s');
-            $logs[] = [
-                'id' => $logId++,
-                'user' => $u->nome . ' ' . $u->sobrenome,
-                'action' => $u->role === 'admin' ? 'Acesso administrativo: ' . $u->email : 'Cadastro de cliente: ' . $u->email,
-                'type' => $u->role === 'admin' ? 'AUTH_LOGIN' : 'USER_ADD',
-                'timestamp' => $dataHora,
+            return [
+                'id' => $log->hashid,
+                // schema novo: actor_label/description; colunas antigas ficam como fallback
+                'user' => $log->actor_label ?: ($log->autor ?: ($adminRef ? "Admin {$adminRef}" : 'Sistema')),
+                'action' => $log->description ?: ($log->detalhes ?: ($log->action ? "{$log->action} em {$log->table_affected} (" . ($log->record_hashid ?? '-') . ')' : "Ação em {$log->tabela} (" . ($legacyRef ?? '-') . ')')),
+                'type' => $log->action ?: ($log->acao ?: 'AUDIT'),
+                'timestamp' => $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : date('Y-m-d H:i:s'),
             ];
-        }
-
-        $produtos = Produto::orderBy('id', 'desc')->take(10)->get();
-        foreach ($produtos as $p) {
-            $logs[] = [
-                'id' => $logId++,
-                'user' => 'Administrador',
-                'action' => 'Produto catalogado: ' . ($p->modelo ?: 'ID #' . $p->id) . ' (' . ($p->tipo_do_produto ?: 'Calçado') . ')',
-                'type' => 'PRODUCT_ADD',
-                'timestamp' => date('Y-m-d H:i:s', strtotime("-{$p->id} hours")),
-            ];
-        }
-
-        usort($logs, function ($a, $b) {
-            return strcmp($b['timestamp'], $a['timestamp']);
         });
 
         return response()->json([
             'status' => 'success',
-            'data' => $logs
+            'data' => $formatted
         ], 200);
     }
 }

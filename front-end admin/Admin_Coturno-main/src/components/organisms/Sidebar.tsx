@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SidebarNavItem } from '../molecules/SidebarNavItem'; 
 import { HomeIcon, ProductsIcon, OrdersIcon, UsersIcon, LogoutIcon, LogIcon, ImageIcon } from '../atoms/Icons';
+import { logout, LOGIN_PATH } from '../../lib/auth';
 
 export interface SidebarProps {
   activePage?: string;
@@ -12,9 +13,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = (): void => {
-    console.log('Efetuando logout...');
-    navigate('/login'); 
+  const handleLogout = async (): Promise<void> => {
+    // Revoga o token no servidor e limpa a sessão local.
+    await logout().catch(() => undefined);
+    navigate(LOGIN_PATH, { replace: true });
   };
 
   return (

@@ -3,38 +3,47 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Usuario;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        Usuario::updateOrCreate(
-            ['email' => 'admin@coturnos.com.br'],
-            [
-                'nome' => 'Administrador',
-                'sobrenome' => 'Coturnos & Cia',
-                'cpf' => '000.000.000-00',
-                'senha' => Hash::make('admin123'),
-                'provider' => 'local',
-                'role' => 'admin',
-                'status' => 'ativo',
-                'excluido' => 'N',
-                'data_criacao' => now(),
-            ]
-        );
+        $senha = (string) env('ADMIN_SEED_PASSWORD', '');
+        $gerada = false;
+        if (strlen($senha) < 8) {
+            $senha = Str::password(16, symbols: false);
+            $gerada = true;
+        }
 
-        if (class_exists(User::class)) {
-            User::updateOrCreate(
-                ['email' => 'admin@coturnos.com.br'],
-                [
-                    'name' => 'Administrador Coturnos & Cia',
-                    'password' => Hash::make('admin123'),
-                ]
-            );
+        $admin = User::firstOrNew(['email' => 'admin@coturnos.com.br']);
+        $novo = !$admin->exists;
+
+        $admin->fill([
+            'first_name' => 'Administrador',
+            'last_name' => 'Coturnos & Cia',
+            'provider' => 'local',
+        ]);
+
+        if ($novo) {
+            $admin->created_at = now();
+        }
+
+        if ($novo || env('ADMIN_SEED_PASSWORD')) {
+            $admin->password = Hash::make($senha);
+        }
+
+        $admin->forceFill([
+            'role' => 'admin',
+            'status' => 'ativo',
+            'is_deleted' => 'N',
+        ])->save();
+
+        if ($novo && $gerada && $this->command) {
+            $this->command->warn("Admin criado: admin@coturnos.com.br / senha: {$senha}");
+            $this->command->warn('Guarde esta senha agora: ela não será exibida novamente.');
         }
     }
 }
-

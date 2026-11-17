@@ -31,12 +31,17 @@ export default function Pedidos_Listagem(): React.JSX.Element {
   const fetchPedidos = async (): Promise<void> => {
     try {
       setLoading(true);
-      const res = await fetch('/api/v1/pedidos');
+      const res = await fetch(`/api/v1/pedidos?_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', Accept: 'application/json' },
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.data && Array.isArray(json.data)) {
           setPedidos(json.data);
         }
+      } else if (res.status === 403 || res.status === 401) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Acesso restrito. Apenas administradores autorizados.');
       }
     } catch (err) {
       console.error('Erro ao buscar pedidos do banco de dados MySQL:', err);
@@ -54,6 +59,8 @@ export default function Pedidos_Listagem(): React.JSX.Element {
     if (pedido) {
       setFormData({
         id: pedido.id,
+        orderNumber: pedido.orderNumber,
+        cliente: pedido.cliente,
         valorTotal: pedido.valorTotal,
         statusCompra: pedido.statusCompra,
         statusEnvio: pedido.statusEnvio,
@@ -91,8 +98,13 @@ export default function Pedidos_Listagem(): React.JSX.Element {
         if (res.ok) {
           await fetchPedidos();
           handleCloseForm();
+        } else if (res.status === 404) {
+          // a lista estava desatualizada (pedido alterado/removido em outra aba): recarrega
+          alert('Este pedido não foi encontrado no servidor. A lista será recarregada.');
+          handleCloseForm();
+          await fetchPedidos();
         } else {
-          const err = await res.json();
+          const err = await res.json().catch(() => ({}));
           alert(err.message || 'Erro ao atualizar pedido no banco de dados.');
         }
       } catch (err) {
@@ -122,8 +134,11 @@ export default function Pedidos_Listagem(): React.JSX.Element {
 
       if (res.ok) {
         await fetchPedidos();
+      } else if (res.status === 404) {
+        alert('Este pedido não foi encontrado no servidor. A lista será recarregada.');
+        await fetchPedidos();
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         alert(err.message || 'Erro ao cancelar pedido.');
       }
     } catch (err) {
@@ -156,7 +171,7 @@ export default function Pedidos_Listagem(): React.JSX.Element {
           {isEditing ? (
             <div className="w-full bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-6">
               <h2 className="text-xl font-bold text-slate-900">
-                Detalhes do Pedido #{formData.id}
+                Detalhes do Pedido {formData.orderNumber ?? `#${formData.id}`}
               </h2>
 
               <form onSubmit={handleFormSubmit} className="space-y-6">

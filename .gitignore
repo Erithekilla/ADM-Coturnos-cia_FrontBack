@@ -24,6 +24,8 @@
 *.env
 *.env.*
 
+.MPC
+
 # Manter arquivos de exemplo e templates
 !.env.example
 !.env.*.example
@@ -108,6 +110,8 @@ auth.json
 *.db-journal
 backend-api/database/*.sqlite
 backend-api/database/*.sqlite-journal
+backend-api/database/migrations_backup_atual/
+*/migrations_backup_atual/
 
 # ------------------------------------------------------------------------------
 # 6. Arquivos de Backup, Temporários e Swaps

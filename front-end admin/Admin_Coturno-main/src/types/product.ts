@@ -7,6 +7,8 @@ export interface Product {
   model: string;
   color: string;
   price: number;
+  cost_price?: number;
+  costPrice?: number;
   stock: number;
   status: ProductStatus;
 }

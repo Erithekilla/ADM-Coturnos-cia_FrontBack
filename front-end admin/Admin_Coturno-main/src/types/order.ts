@@ -12,6 +12,7 @@ export type PedidoCompraStatus =
 
 export type PedidoEnvioStatus =
   | 'Pendente'
+  | 'Processando'
   | 'Enviado'
   | 'Entregue'
   | 'Cancelado';
@@ -24,6 +25,10 @@ export interface ItemPedido {
 
 export interface Pedido {
   id: string | number;
+  /** Número público do pedido (ex.: CC-8F3K2Q9ZLM) */
+  orderNumber?: string;
+  /** Nome do cliente */
+  cliente?: string;
   valorTotal: number;
   statusCompra: PedidoCompraStatus;
   statusEnvio: PedidoEnvioStatus;

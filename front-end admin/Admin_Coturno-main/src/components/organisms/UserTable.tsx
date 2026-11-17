@@ -21,6 +21,8 @@ export interface UserItem {
   provider: string;
   status: string;
   createdAt: string;
+  /** true quando o usuário já tem CPF cadastrado (o CPF é imutável) */
+  hasCpf?: boolean;
 }
 
 export interface UserTableProps {

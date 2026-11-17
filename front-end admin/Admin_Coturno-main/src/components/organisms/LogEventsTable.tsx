@@ -2,7 +2,7 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 
 export interface LogEvent {
-  id: number;
+  id: number | string;
   user: string;
   action: string;
   type: string;
@@ -12,13 +12,14 @@ export interface LogEvent {
 export const LogEventsTable: React.FC = () => {
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Estados dos Filtros
   const [filterUser, setFilterUser] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  
+
   // Estado para controle de paginação
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 8;
@@ -27,12 +28,16 @@ export const LogEventsTable: React.FC = () => {
     const fetchLogs = async () => {
       try {
         setLoading(true);
+        setAuthError(null);
         const res = await fetch('/api/v1/admin/logs');
         if (res.ok) {
           const json = await res.json();
           if (json.data && Array.isArray(json.data)) {
             setEvents(json.data);
           }
+        } else if (res.status === 403 || res.status === 401) {
+          const err = await res.json().catch(() => ({}));
+          setAuthError(err.message || 'Acesso negado aos logs de auditoria. Apenas administradores possuem autorização.');
         }
       } catch (err) {
         console.error('Erro ao buscar logs do banco de dados:', err);
@@ -51,7 +56,7 @@ export const LogEventsTable: React.FC = () => {
     const eventDate = event.timestamp.split(' ')[0];
     const matchesStartDate = startDate === '' || eventDate >= startDate;
     const matchesEndDate = endDate === '' || eventDate <= endDate;
-    
+
     return matchesUser && matchesType && matchesStartDate && matchesEndDate;
   });
 
@@ -74,9 +79,16 @@ export const LogEventsTable: React.FC = () => {
         <h2 className="text-lg font-bold text-slate-900">Histórico de Auditoria (Banco de Dados)</h2>
         <p className="text-sm text-slate-500 mb-4">Registro automático de eventos gerados a partir do banco de dados MySQL.</p>
 
+        {authError && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-lg mb-4 flex items-center gap-3">
+            <span className="font-bold text-rose-600">⚠️</span>
+            <div className="text-sm font-medium">{authError}</div>
+          </div>
+        )}
+
         {/* Bloco de Filtros Organizado */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          
+
           {/* Filtro por Login / Usuário */}
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Usuário</label>
@@ -129,7 +141,7 @@ export const LogEventsTable: React.FC = () => {
 
         </div>
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>

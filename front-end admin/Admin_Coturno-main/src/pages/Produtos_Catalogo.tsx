@@ -12,6 +12,7 @@ export interface ProductFormData {
   description: string;
   active: 'Ativo' | 'Inativo' | string;
   price: number | string;
+  cost_price: number | string;
   stock: number | string;
   sizes: string;
   color: string;
@@ -28,7 +29,7 @@ export default function Produtos_Catalogo(): React.JSX.Element {
   const [loading, setLoading] = useState<boolean>(true);
 
   const [formData, setFormData] = useState<ProductFormData>({
-    name: '', productType: '', model: '', brand: '', description: '', active: 'Ativo', price: '', stock: '', sizes: '', color: '', image: ''
+    name: '', productType: '', model: '', brand: '', description: '', active: 'Ativo', price: '', cost_price: '', stock: '', sizes: '', color: '', image: ''
   });
 
   const fetchProducts = async (): Promise<void> => {
@@ -46,6 +47,9 @@ export default function Produtos_Catalogo(): React.JSX.Element {
         if (json.data && Array.isArray(json.data)) {
           setProducts(json.data);
         }
+      } else if (res.status === 403 || res.status === 401) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Acesso negado. Apenas administradores autorizados.');
       }
     } catch (err) {
       console.error('Erro ao buscar produtos do banco de dados:', err);
@@ -59,7 +63,7 @@ export default function Produtos_Catalogo(): React.JSX.Element {
   }, []);
 
   const handleEdit = (id: string | number): void => {
-    const product = products.find(p => p.id === id);
+    const product = products.find(p => String(p.id) === String(id));
     if (product) {
       setFormData({
         name: product.name,
@@ -69,12 +73,13 @@ export default function Produtos_Catalogo(): React.JSX.Element {
         description: (product as any).description || '',
         active: product.active,
         price: product.price,
+        cost_price: (product as any).cost_price ?? (product as any).costPrice ?? '',
         stock: product.stock,
         sizes: product.sizes,
         color: product.color,
         image: (product as any).image || ''
       });
-      setEditingId(Number(id));
+      setEditingId(id);
       setFormMode('edit');
     }
   };
@@ -104,7 +109,7 @@ export default function Produtos_Catalogo(): React.JSX.Element {
   };
   
   const handleOpenCreate = (): void => {
-    setFormData({ name: '', productType: '', model: '', brand: '', description: '', active: 'Ativo', price: '', stock: '', sizes: '', color: '', image: '' });
+    setFormData({ name: '', productType: '', model: '', brand: '', description: '', active: 'Ativo', price: '', cost_price: '', stock: '', sizes: '', color: '', image: '' });
     setFormMode('create');
   };
   
@@ -129,6 +134,7 @@ export default function Produtos_Catalogo(): React.JSX.Element {
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     const parsedPrice = typeof formData.price === 'number' ? formData.price : parseFloat(formData.price) || 0;
+    const parsedCostPrice = typeof formData.cost_price === 'number' ? formData.cost_price : parseFloat(formData.cost_price) || 0;
     const parsedStock = typeof formData.stock === 'number' ? formData.stock : parseInt(formData.stock, 10) || 0;
 
     const payload = {
@@ -143,6 +149,9 @@ export default function Produtos_Catalogo(): React.JSX.Element {
       active: formData.active,
       price: parsedPrice,
       preco: parsedPrice,
+      cost_price: parsedCostPrice,
+      costPrice: parsedCostPrice,
+      preco_custo: parsedCostPrice,
       stock: parsedStock,
       estoque: parsedStock,
       sizes: formData.sizes,
@@ -258,9 +267,9 @@ export default function Produtos_Catalogo(): React.JSX.Element {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="flex flex-col space-y-1">
-                    <label className="text-sm font-medium text-slate-600">Preço (R$)</label>
+                    <label className="text-sm font-medium text-slate-600">Preço de Venda (R$)</label>
                     <input 
                       type="number" 
                       step="0.01" 
@@ -269,6 +278,18 @@ export default function Produtos_Catalogo(): React.JSX.Element {
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.price}
                       onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-sm font-medium text-slate-600">Preço de Custo (R$)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="0,00"
+                      className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={formData.cost_price}
+                      onChange={(e) => setFormData({...formData, cost_price: e.target.value})}
                     />
                   </div>
 

@@ -26,25 +26,8 @@ interface ChartsSectionProps {
 }
 
 export const ChartsSection: React.FC<ChartsSectionProps> = ({ 
-  vendasMensais = [
-    { mes: 'Jan', vendas: 0, pedidos: 0 },
-    { mes: 'Fev', vendas: 0, pedidos: 0 },
-    { mes: 'Mar', vendas: 0, pedidos: 0 },
-    { mes: 'Abr', vendas: 0, pedidos: 0 },
-    { mes: 'Mai', vendas: 0, pedidos: 0 },
-    { mes: 'Jun', vendas: 0, pedidos: 0 },
-    { mes: 'Jul', vendas: 0, pedidos: 0 },
-    { mes: 'Ago', vendas: 0, pedidos: 0 },
-    { mes: 'Set', vendas: 0, pedidos: 0 },
-    { mes: 'Out', vendas: 0, pedidos: 0 },
-    { mes: 'Nov', vendas: 0, pedidos: 0 },
-    { mes: 'Dez', vendas: 0, pedidos: 0 },
-  ], 
-  categorias = [
-    { nome: 'Coturno', porcentagem: 50, cor: '#142952', classesTexto: 'text-azul' },
-    { nome: 'Borzeguim', porcentagem: 30, cor: '#4a5c3a', classesTexto: 'text-army' },
-    { nome: 'Social', porcentagem: 20, cor: '#000000', classesTexto: 'text-preto' },
-  ] 
+  vendasMensais = [], 
+  categorias = [] 
 }) => {
   // --- CONFIGURAÇÕES DO GRÁFICO DE LINHAS (SVG) ---
   const svgWidth = 500;
@@ -152,7 +135,12 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         <ChartHeader title="Produtos por Categoria" />
         
         <div className="flex-1 flex items-center justify-center relative mt-4 w-full h-full min-h-0">
-          <div className="w-40 h-40 flex items-center justify-center relative">
+          {categorias.length === 0 ? (
+            <div className="text-center text-xs text-slate-400 py-6">
+              Nenhuma categoria registrada no banco de dados.
+            </div>
+          ) : (
+            <div className="w-40 h-40 flex items-center justify-center relative">
             
             <div className="w-full h-full">
               <svg className="w-full h-full block overflow-visible" viewBox="0 0 32 32">
@@ -220,7 +208,8 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
               });
             })()}
 
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

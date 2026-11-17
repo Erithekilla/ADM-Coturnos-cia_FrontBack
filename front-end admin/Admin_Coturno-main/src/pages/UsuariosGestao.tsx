@@ -52,6 +52,9 @@ export default function UsuariosGestao(): React.JSX.Element {
         if (json.data && Array.isArray(json.data)) {
           setUsers(json.data);
         }
+      } else if (res.status === 403 || res.status === 401) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Acesso restrito. Apenas administradores autorizados.');
       }
     } catch (err) {
       console.error('Erro ao buscar usuários do banco MySQL:', err);
@@ -63,12 +66,6 @@ export default function UsuariosGestao(): React.JSX.Element {
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  const formatCep = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 8);
-    if (digits.length <= 5) return digits;
-    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-  };
 
   const formatCpf = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -150,11 +147,20 @@ export default function UsuariosGestao(): React.JSX.Element {
     setEditingId(null);
   };
 
-  const filteredUsers = users.filter(user =>
-    `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (user.cpf && user.cpf.includes(searchTerm))
-  );
+  const filteredUsers = users.filter(user => {
+    const term = searchTerm.toLowerCase();
+    const matchesName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase().includes(term);
+    const matchesEmail = Boolean(user.email && user.email.toLowerCase().includes(term));
+    const cleanSearch = searchTerm.replace(/\D/g, '');
+    const cleanCpf = (user.cpf || '').replace(/\D/g, '');
+    const matchesCpf = Boolean(
+      user.cpf && (
+        user.cpf.toLowerCase().includes(term) ||
+        (cleanSearch.length > 0 && cleanCpf.includes(cleanSearch))
+      )
+    );
+    return matchesName || matchesEmail || matchesCpf;
+  });
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -169,7 +175,9 @@ export default function UsuariosGestao(): React.JSX.Element {
       type: formData.type,
       role: formData.type?.toLowerCase() === 'administrador' ? 'admin' : 'cliente',
       provider: formData.provider || 'local',
-      senha: 'password123',
+      phone: formData.phone,
+      // Senha nunca é enviada daqui: na criação o servidor gera uma senha
+      // temporária; na edição a senha atual é preservada.
     };
 
     try {
@@ -186,10 +194,14 @@ export default function UsuariosGestao(): React.JSX.Element {
       });
 
       if (res.ok) {
+        const json = await res.json().catch(() => ({}));
+        if (json.senha_temporaria) {
+          alert(`Usuário criado.\n\nSenha temporária: ${json.senha_temporaria}\n\nAnote agora: ela não será exibida novamente.`);
+        }
         await fetchUsers();
         handleCloseForm();
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         alert(err.message || 'Erro ao salvar usuário no banco de dados.');
       }
     } catch (err) {
@@ -253,11 +265,19 @@ export default function UsuariosGestao(): React.JSX.Element {
                 <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">CPF</label>
-                    <input type="text" className="p-2 border border-slate-200 rounded-lg text-sm" value={formData.cpf || ''} onChange={(e) => setFormData({...formData, cpf: formatCpf(e.target.value)})} placeholder="123.456.789-00" />
+                    <input
+                      type="text"
+                      className="p-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      value={formData.cpf || ''}
+                      onChange={(e) => setFormData({...formData, cpf: formatCpf(e.target.value)})}
+                      placeholder="123.456.789-00"
+                      disabled={formMode === 'edit' && Boolean(formData.hasCpf)}
+                      title={formMode === 'edit' && formData.hasCpf ? 'O CPF não pode ser alterado após o cadastro.' : undefined}
+                    />
                   </div>
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">CEP</label>
-                    <input type="text" className="p-2 border border-slate-200 rounded-lg text-sm" value={formData.cep || ''} onChange={(e) => setFormData({...formData, cep: formatCep(e.target.value)})} placeholder="12345-678" />
+                    <input type="text" className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-100 text-slate-500 cursor-not-allowed" value={formData.cep || ''} disabled placeholder="Cadastrado pelo cliente" title="O endereço é cadastrado pelo próprio cliente na loja." />
                   </div>
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Tipo de Usuário</label>
@@ -268,11 +288,7 @@ export default function UsuariosGestao(): React.JSX.Element {
                   </div>
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Provedor</label>
-                    <select className="p-2 border border-slate-200 rounded-lg bg-white text-sm" value={formData.provider || 'Local'} onChange={(e) => setFormData({...formData, provider: e.target.value})}>
-                      <option value="Local">Local</option>
-                      <option value="Google">Google</option>
-                      <option value="Email/Senha">Email/Senha</option>
-                    </select>
+                    <input type="text" className="p-2 border border-slate-200 rounded-lg text-sm bg-slate-100 text-slate-500 cursor-not-allowed" value={formData.provider || 'Local'} disabled title="Definido pela forma de cadastro (e-mail e senha ou login social)." />
                   </div>
                 </div>
 

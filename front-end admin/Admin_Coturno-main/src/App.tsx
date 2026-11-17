@@ -5,21 +5,27 @@ import UsuariosGestao from './pages/UsuariosGestao';
 import LogEventos from './pages/LogEventos';
 import { EdicaoImagens } from './pages/Edicao_Imagens';
 import Pedidos_Listagem from './pages/Pedidos_Listagem';
+import Login from './pages/Login';
+import RequireAuth from './components/organisms/RequireAuth';
 
 export default function App() {
   return (
     <Routes>
       {/* Redirecionamento inicial da raiz administrativa */}
       <Route path="/" element={<Navigate to="/admin" replace />} />
-      
-      {/* Rotas do Painel Administrativo */}
-      <Route path="/admin" element={<Home_admin />} />
-      <Route path="/admin/produtos" element={<Produtos_Catalogo />} />
-      <Route path="/admin/pedidos" element={<Pedidos_Listagem />} />
-      <Route path="/admin/usuarios" element={<UsuariosGestao />} />
-      <Route path="/admin/imagens" element={<EdicaoImagens />} />
-      <Route path="/admin/logs" element={<LogEventos />} />
-      
+
+      {/* Login (única rota pública do painel) */}
+      <Route path="/admin/login" element={<Login />} />
+      <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+
+      {/* Rotas do Painel Administrativo (exigem sessão de administrador) */}
+      <Route path="/admin" element={<RequireAuth><Home_admin /></RequireAuth>} />
+      <Route path="/admin/produtos" element={<RequireAuth><Produtos_Catalogo /></RequireAuth>} />
+      <Route path="/admin/pedidos" element={<RequireAuth><Pedidos_Listagem /></RequireAuth>} />
+      <Route path="/admin/usuarios" element={<RequireAuth><UsuariosGestao /></RequireAuth>} />
+      <Route path="/admin/imagens" element={<RequireAuth><EdicaoImagens /></RequireAuth>} />
+      <Route path="/admin/logs" element={<RequireAuth><LogEventos /></RequireAuth>} />
+
       {/* Fallback para páginas não encontradas */}
       <Route path="*" element={
         <div className="flex items-center justify-center h-screen bg-slate-50 text-slate-800">
