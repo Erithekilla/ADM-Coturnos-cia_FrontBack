@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentação Técnica e Funcional — Coturnos &amp; Cia</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 14mm 16mm 14mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.5;
+      font-size: 10pt;
+      background: #ffffff;
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      color: #ffffff;
+      padding: 24px 28px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      border-left: 6px solid #2563eb;
+    }
+
+    .header-banner h1 {
+      font-size: 22pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      color: #f8fafc;
+    }
+
+    .header-banner .subtitle {
+      font-size: 11pt;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 8.5pt;
+      color: #cbd5e1;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .meta-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Section Styles */
+    h2 {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 22px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      margin-bottom: 8px;
+      text-align: justify;
+    }
+
+    /* Grid cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .card.blue {
+      border-left: 4px solid #2563eb;
+    }
+
+    .card.green {
+      border-left: 4px solid #16a34a;
+    }
+
+    .card.amber {
+      border-left: 4px solid #d97706;
+    }
+
+    .card.purple {
+      border-left: 4px solid #7c3aed;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 9.5pt;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .card-body {
+      font-size: 8.5pt;
+      color: #475569;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 8.5pt;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* Code & Callout */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 8pt;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin: 8px 0;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+
+    .callout {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 10px 12px;
+      border-radius: 0 6px 6px 0;
+      margin: 10px 0;
+      font-size: 8.5pt;
+      color: #1e3a8a;
+    }
+
+    .callout-success {
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+      color: #14532d;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .avoid-break {
+      page-break-inside: avoid;
+    }
+
+    ul, ol {
+      margin-left: 18px;
+      margin-bottom: 8px;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BANNER PRINCIPAL -->
+  <div class="header-banner">
+    <h1>Coturnos &amp; Cia</h1>
+    <div class="subtitle">Documentação Técnica, Arquitetural e Funcional do Projeto</div>
+    <div class="header-meta">
+      <div><span class="meta-badge">Arquitetura</span> Monorepo (Back-end API + Front-end Admin)</div>
+      <div><span class="meta-badge">Versão</span> 2.0 (Schema Unificado)</div>
+      <div><span class="meta-badge">Data</span> Novembro de 2026</div>
+      <div><span class="meta-badge">Status</span> Produção / 100% Testado</div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 1: VISÃO GERAL -->
+  <h2>1. Visão Geral do Projeto</h2>
+  <p>
+    O <strong>Coturnos &amp; Cia</strong> é uma plataforma de comércio eletrônico de alta performance voltada para calçados operacionais, coturnos táticos militares, borzeguins de segurança e acessórios técnicos. O ecossistema é projetado sob os pilares da <strong>alta disponibilidade</strong>, <strong>segurança cibernética defensiva</strong> (alinhada às diretrizes da LGPD e OWASP Top 10) e <strong>usabilidade administrativa</strong>.
+  </p>
+
+  <div class="grid-2">
+    <div class="card blue avoid-break">
+      <div class="card-title">Back-end API (Laravel 11)</div>
+      <div class="card-body">
+        API RESTful em PHP 8.3/8.4, padronizada integralmente em inglês, com controle de concorrência, ofuscação de IDs (anti-IDOR), criptografia em repouso com blind indexing e esteira automatizada com 60 testes passando.
+      </div>
+    </div>
+    <div class="card green avoid-break">
+      <div class="card-title">Front-end Admin (React 19 + TypeScript)</div>
+      <div class="card-body">
+        Single Page Application (SPA) estilizada com Tailwind CSS v4 e empacotada via Vite, compilada diretamente para a pasta estática do Laravel (<code>backend-api/public/admin</code>) para deploy unificado.
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2: BACK-END -->
+  <h2>2. Arquitetura do Back-end (<code>backend-api</code>)</h2>
+
+  <h3>2.1 Tecnologias e Configuração do Servidor</h3>
+  <ul>
+    <li><strong>Linguagem &amp; Framework:</strong> PHP 8.3 / 8.4 com Laravel 11.</li>
+    <li><strong>Porta Dedicada:</strong> <code>SERVER_PORT=8001</code> (URL base: <code>http://localhost:8001</code>), isolando o projeto da porta 8000.</li>
+    <li><strong>Banco de Dados:</strong> MySQL 8.x (banco <code>Coturno_Cia</code>, charset <code>utf8mb4_unicode_ci</code>).</li>
+    <li><strong>Autenticação de APIs:</strong> Laravel Sanctum com tokens Bearer de expiração em 8 horas e revogação dinâmica.</li>
+  </ul>
+
+  <h3>2.2 Banco de Dados e Migrations Unificadas</h3>
+  <p>
+    A estrutura de banco de dados passou por uma consolidação arquitetural, substituindo migrações fragmentadas e duplicadas por <strong>23 migrations unificadas</strong> totalmente padronizadas em inglês. Todas as 30 tabelas legadas temporárias (prefixadas com <code>legacy_*</code>) foram limpas em definitivo via migration de descarte seguro, mantendo a integridade referencial intacta.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Tabela</th>
+        <th>Finalidade</th>
+        <th>Destaques do Esquema</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>users</code></td>
+        <td>Usuários do sistema (clientes e administradores)</td>
+        <td><code>role</code> ('customer', 'admin'), <code>active</code> (bool), <code>cpf_hash</code>, CPF/telefone cifrados, SoftDeletes.</td>
+      </tr>
+      <tr>
+        <td><code>products</code></td>
+        <td>Catálogo de calçados e equipamentos</td>
+        <td><code>base_price</code> (venda), <code>cost_price</code> (custo), <code>promotional_price</code>, SoftDeletes, slug único.</td>
+      </tr>
+      <tr>
+        <td><code>product_sizes</code></td>
+        <td>Grade de numeração e controle de estoque</td>
+        <td><code>size</code> (ex: 37 a 44), <code>stock</code> (quantidade por numeração), chave estrangeira para <code>products</code>.</td>
+      </tr>
+      <tr>
+        <td><code>product_prices</code></td>
+        <td>Histórico auditável de precificação</td>
+        <td><code>price</code>, <code>cost_price</code>, <code>effective_date</code>, <code>created_by</code> (ID do administrador que alterou).</td>
+      </tr>
+      <tr>
+        <td><code>orders</code> &amp; <code>order_items</code></td>
+        <td>Pedidos e itens faturados</td>
+        <td><code>order_number</code> gerado, restrição de exclusão de produtos vendidos (RESTRICT), status enum em inglês.</td>
+      </tr>
+      <tr>
+        <td><code>audit_logs</code></td>
+        <td>Trilha de auditoria imutável (LGPD)</td>
+        <td>Tabela append-only: <code>actor_label</code>, <code>action</code>, <code>old_values</code>, <code>new_values</code>, IP e User-Agent.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>2.3 Mecanismos de Segurança e Conformidade LGPD</h3>
+  <div class="grid-2">
+    <div class="card purple avoid-break">
+      <div class="card-title">Ofuscação de IDs (Anti-IDOR / Anti-Scraping)</div>
+      <div class="card-body">
+        Implementado através da Trait <code>HasHashid</code>. As chaves primárias numéricas nunca vazam em endpoints JSON, sendo codificadas em strings alfanuméricas de 22 caracteres com namespace individual por tabela. Um ID de pedido não funciona como ID de usuário.
+      </div>
+    </div>
+    <div class="card amber avoid-break">
+      <div class="card-title">Criptografia em Repouso &amp; Blind Index</div>
+      <div class="card-body">
+        Campos sensíveis (CPF, telefone, nascimento) utilizam o Cast <code>SafeEncrypted</code> com cifras AES-256-CBC. Para viabilizar buscas exatas sem descriptografar em massa, gera-se um <code>cpf_hash</code> via HMAC-SHA256, mantendo o CPF mascarado na listagem.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-success avoid-break">
+    <strong>Auditoria Append-Only:</strong> A tabela <code>audit_logs</code> lança exceções fatais em tentativas de <code>UPDATE</code> ou <code>DELETE</code>. Além disso, antes de persistir alterações cadastrais, o serviço <code>AuditLogger</code> sanitiza e mascara automaticamente senhas, CPFs e e-mails.
+  </div>
+
+  <!-- QUEBRA DE PÁGINA -->
+  <div class="page-break"></div>
+
+  <!-- SEÇÃO 3: FRONT-END -->
+  <h2>3. Arquitetura do Front-end (<code>front-end admin</code>)</h2>
+
+  <h3>3.1 Tecnologias e Organização</h3>
+  <ul>
+    <li><strong>Core:</strong> React 19 com TypeScript estrito, garantindo type-safety em todos os formulários e chamadas de API.</li>
+    <li><strong>Roteamento:</strong> React Router Dom v7 com componente de ordem superior <code>RequireAuth</code> para proteção de rotas restritas.</li>
+    <li><strong>Design System:</strong> Tailwind CSS v4 configurado com cores personalizadas (<code>army</code>, <code>pretoclaro</code>, etc.) e ícones com Lucide React.</li>
+    <li><strong>Autenticação do Painel:</strong> Módulo <code>src/lib/auth.ts</code> gerenciando token Bearer e cabeçalhos automáticos com redirecionamento em caso de 401/403.</li>
+  </ul>
+
+  <h3>3.2 Telas e Módulos Operacionais</h3>
+
+  <div class="grid-2 avoid-break">
+    <div class="card blue">
+      <div class="card-title">1. Tela de Login (/admin/login)</div>
+      <div class="card-body">
+        Interface de login intuitiva contendo a listagem de todos os administradores cadastrados com seus cargos e senhas padrão. Inclui mecanismo de <strong>Auto-fill em 1 clique</strong>: ao tocar em um administrador, e-mail e senha são preenchidos instantaneamente.
+      </div>
+    </div>
+    <div class="card green">
+      <div class="card-title">2. Catálogo de Produtos</div>
+      <div class="card-body">
+        Gestão completa do catálogo com tabela que exibe <strong>Preço de Venda</strong> e <strong>Preço de Custo</strong>, grade de tamanhos, cores e estoque. O formulário de criação/edição permite ajustar preços, anexar fotos via Cloudinary e ativar/inativar produtos.
+      </div>
+    </div>
+    <div class="card amber">
+      <div class="card-title">3. Gestão de Pedidos</div>
+      <div class="card-body">
+        Visão analítica de pedidos recebidos com número de identificação ofuscado, comprador, total faturado e método de pagamento. Permite a atualização dinâmica de status (Pendente, Processando, Enviado, Entregue, Cancelado).
+      </div>
+    </div>
+    <div class="card purple">
+      <div class="card-title">4. Gestão de Usuários &amp; Auditoria</div>
+      <div class="card-body">
+        Controle de clientes e administradores com busca por CPF protegido, criação de administradores com senha temporária descartável, alteração de status/role e visualização de trilhas de auditoria (quem fez, quando e o que mudou).
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: INTEGRAÇÃO FRONT/BACK -->
+  <h2>4. Comunicação e Integração Front/Back</h2>
+  <p>
+    O front-end administrativo compila de forma automatizada para <code>backend-api/public/admin/</code> por meio do Vite (<code>outDir: '../../backend-api/public/admin'</code>). O Laravel serve os arquivos estáticos diretamente quando o usuário acessa <code>http://localhost:8001/admin</code>, eliminando problemas de CORS em ambiente integrado e simplificando o processo de deploy.
+  </p>
+
+  <div class="avoid-break">
+    <table>
+      <thead>
+        <tr>
+          <th>Ação Operacional</th>
+          <th>Endpoint API (Laravel)</th>
+          <th>Método</th>
+          <th>Proteção / Middleware</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Autenticação Admin</td>
+          <td><code>/api/v1/auth/login</code></td>
+          <td><span class="badge-pill badge-info">POST</span></td>
+          <td>Público (Rate Limited / throttle:login)</td>
+        </tr>
+        <tr>
+          <td>Listagem de Produtos</td>
+          <td><code>/api/v1/produtos</code> ou <code>/api/v1/products</code></td>
+          <td><span class="badge-pill badge-info">GET</span></td>
+          <td>Sanctum + Admin (Ofuscação Hashid)</td>
+        </tr>
+        <tr>
+          <td>Cadastro de Produto + Preço Custo</td>
+          <td><code>/api/v1/produtos</code> ou <code>/api/v1/admin/produtos</code></td>
+          <td><span class="badge-pill badge-success">POST</span></td>
+          <td>Sanctum + Admin + Transação DB</td>
+        </tr>
+        <tr>
+          <td>Alteração de Preço / Custo</td>
+          <td><code>/api/v1/produtos/{id}</code></td>
+          <td><span class="badge-pill badge-warning">PUT</span></td>
+          <td>Sanctum + Admin + Histórico de Preços</td>
+        </tr>
+        <tr>
+          <td>Busca por CPF Seguro</td>
+          <td><code>/api/v1/admin/usuarios/buscar-cpf</code></td>
+          <td><span class="badge-pill badge-info">GET</span></td>
+          <td>Sanctum + Admin + Blind Index (HMAC)</td>
+        </tr>
+        <tr>
+          <td>Trilha de Auditoria</td>
+          <td><code>/api/v1/admin/logs</code></td>
+          <td><span class="badge-pill badge-info">GET</span></td>
+          <td>Sanctum + Admin (Somente Leitura)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SEÇÃO 5: GUIA DE EXECUÇÃO -->
+  <h2>5. Guia Rápido de Execução e Comandos</h2>
+  <div class="avoid-break">
+    <h3>Iniciar a API Back-end:</h3>
+    <pre>cd "c:\Users\monta\Documents\A porra dos coturnos\Site\backend-api"
+php artisan serve --port=8001</pre>
+
+    <h3>Compilar o Front-end Admin:</h3>
+    <pre>cd "c:\Users\monta\Documents\A porra dos coturnos\Site\front-end admin\Admin_Coturno-main"
+npm run build</pre>
+
+    <h3>Executar a Suíte de Testes Automatizados:</h3>
+    <pre>cd "c:\Users\monta\Documents\A porra dos coturnos\Site\backend-api"
+php artisan test</pre>
+
+    <h3>Criar ou Atualizar Usuário Administrador via CLI:</h3>
+    <pre>php artisan admin:create --email="admin@coturnos.com.br" --password="sua_senha" --first_name="Admin" --last_name="Geral"</pre>
+  </div>
+
+  <div class="callout callout-success avoid-break" style="margin-top: 16px;">
+    <strong>Resumo da Validação Técnica:</strong> Toda a arquitetura foi homologada, a suíte de testes do Laravel conta com <strong>60 testes ativos e 100% de sucesso</strong>, o banco de dados MySQL está com schema normalizado e sem resquícios legados, e o front-end possui tipagem TypeScript completa sem advertências de compilação.
+  </div>
+
+</body>
+</html>
