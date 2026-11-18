@@ -23,7 +23,7 @@ type FormMode = 'create' | 'edit' | null;
 
 export default function Produtos_Catalogo(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [formMode, setFormMode] = useState<FormMode>(null); 
+  const [formMode, setFormMode] = useState<FormMode>(null);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -107,12 +107,12 @@ export default function Produtos_Catalogo(): React.JSX.Element {
       alert('Falha na comunicação com o servidor.');
     }
   };
-  
+
   const handleOpenCreate = (): void => {
     setFormData({ name: '', productType: '', model: '', brand: '', description: '', active: 'Ativo', price: '', cost_price: '', stock: '', sizes: '', color: '', image: '' });
     setFormMode('create');
   };
-  
+
   const handleCloseForm = (): void => {
     setFormMode(null);
     setEditingId(null);
@@ -190,10 +190,10 @@ export default function Produtos_Catalogo(): React.JSX.Element {
       <Sidebar activePage="produtos" />
       <main className="flex-1 min-w-0 pl-72 pt-8 pb-10 pr-4 lg:pr-8 xl:pr-12 2xl:pr-16">
         <div className="max-w-[1600px] mx-auto space-y-6 min-w-0">
-          <PageHeader 
-            title="Gerenciamento de Produtos" 
-            subtitle="Gerencie o catálogo de calçados diretamente no banco de dados" 
-            onActionClick={handleOpenCreate} 
+          <PageHeader
+            title="Gerenciamento de Produtos"
+            subtitle="Gerencie o catálogo de calçados diretamente no banco de dados"
+            onActionClick={handleOpenCreate}
             hideButton={formMode !== null}
             buttonClassName="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors px-4 py-2 text-sm flex items-center shadow-sm"
           />
@@ -203,27 +203,27 @@ export default function Produtos_Catalogo(): React.JSX.Element {
               <h2 className="text-xl font-bold text-slate-900">
                 {formMode === 'edit' ? 'Editar Produto no Banco' : 'Cadastrar Novo Produto no Banco'}
               </h2>
-              
+
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Nome do Produto</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       required
                       placeholder="Ex: Coturno Tático"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Tipo de Produto</label>
-                    <select 
+                    <select
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.productType}
-                      onChange={(e) => setFormData({...formData, productType: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
                     >
                       <option value="">Selecione um tipo</option>
                       <option value="Coturno">Coturno</option>
@@ -235,112 +235,165 @@ export default function Produtos_Catalogo(): React.JSX.Element {
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Modelo</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Ex: Combat Pro"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.model}
-                      onChange={(e) => setFormData({...formData, model: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Marca</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Ex: Atalaia"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.brand}
-                      onChange={(e) => setFormData({...formData, brand: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-col space-y-1">
                   <label className="text-sm font-medium text-slate-600">Descrição do Produto</label>
-                  <textarea 
+                  <textarea
                     rows={3}
                     placeholder="Adicione detalhes sobre material, solado e resistência..."
                     className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Preço de Venda (R$)</label>
-                    <input 
-                      type="number" 
-                      step="0.01" 
+                    <input
+                      type="number"
+                      step="0.01"
                       required
                       placeholder="0,00"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Preço de Custo (R$)</label>
-                    <input 
-                      type="number" 
-                      step="0.01" 
+                    <input
+                      type="number"
+                      step="0.01"
                       placeholder="0,00"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.cost_price}
-                      onChange={(e) => setFormData({...formData, cost_price: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Estoque</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       required
                       placeholder="Quantidade"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.stock}
-                      onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Tamanhos Disponíveis</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Ex: 38-44 ou 38, 39, 40"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.sizes}
-                      onChange={(e) => setFormData({...formData, sizes: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1">
                     <label className="text-sm font-medium text-slate-600">Cor</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Ex: Preto, Marrom, Bege"
                       className="border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
                       value={formData.color}
-                      onChange={(e) => setFormData({...formData, color: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                     />
                   </div>
                 </div>
 
+                {/* Feedback Visual Dinâmico de Lucro / Margem */}
+                {Number(formData.cost_price) > 0 && Number(formData.price) > 0 && (() => {
+                  const cost = Number(formData.cost_price);
+                  const sale = Number(formData.price);
+                  const profit = sale - cost;
+                  const profitPercent = ((sale - cost) / cost) * 100;
+                  const costRatioPercent = (sale / cost) * 100;
+                  const isProfit = sale > cost;
+                  const isLoss = sale < cost;
+                  const isBreakEven = sale === cost;
+
+                  return (
+                    <div className={`p-3 rounded-lg border text-xs flex items-center justify-between transition-colors ${
+                      isLoss
+                        ? 'bg-rose-50 border-rose-200 text-rose-700'
+                        : isBreakEven
+                        ? 'bg-amber-50 border-amber-300 text-amber-800'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{isLoss ? '🚨' : isBreakEven ? '⚖️' : '✅'}</span>
+                        <div>
+                          <p className="font-semibold">
+                            {isLoss
+                              ? 'Atenção: Preço de venda abaixo de 100% do custo (Prejuízo)!'
+                              : isBreakEven
+                              ? 'Preço de venda igual a 100% do custo (Ponto de equilíbrio)'
+                              : `Margem com Lucro (${profitPercent.toFixed(1)}% acima do custo)`}
+                          </p>
+                          <p className="text-[11px] opacity-80">
+                            {isLoss ? (
+                              <>Prejuízo por unidade: {Math.abs(profit).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (Preço final em {costRatioPercent.toFixed(1)}% do custo)</>
+                            ) : isBreakEven ? (
+                              <>Ponto de equilíbrio: Venda cobrindo exatamente o preço de custo (100%)</>
+                            ) : (
+                              <>Lucro por unidade: {profit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (Preço final a {costRatioPercent.toFixed(1)}% do custo total)</>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-sm font-bold block">
+                          {profitPercent > 0 ? `+${profitPercent.toFixed(1)}%` : `${profitPercent.toFixed(1)}%`}
+                        </span>
+                        <span className="text-[10px] opacity-75">
+                          {isProfit ? 'Lucro sobre custo' : isLoss ? 'Prejuízo sobre custo' : 'Margem zero'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex flex-col space-y-1">
                   <label className="text-sm font-medium text-slate-600">Status</label>
                   <div className="flex space-x-2">
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData({...formData, active: 'Ativo'})}
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, active: 'Ativo' })}
                       className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${formData.active === 'Ativo' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-white text-slate-600 border-slate-300'}`}
                     >
                       Ativo
                     </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData({...formData, active: 'Inativo'})}
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, active: 'Inativo' })}
                       className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${formData.active === 'Inativo' ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-white text-slate-600 border-slate-300'}`}
                     >
                       Inativo
@@ -353,11 +406,11 @@ export default function Produtos_Catalogo(): React.JSX.Element {
                   <div className="flex items-center space-x-3">
                     <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-medium px-4 py-2 rounded-lg transition-colors text-sm flex items-center justify-center">
                       <span>Anexar Imagem</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleFileChange} 
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
                       />
                     </label>
                     <span className="text-sm text-slate-500 truncate max-w-xs">
@@ -367,15 +420,15 @@ export default function Produtos_Catalogo(): React.JSX.Element {
                 </div>
 
                 <div className="flex space-x-3 pt-4">
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                   >
                     {formMode === 'edit' ? 'Salvar no Banco' : 'Cadastrar no Banco'}
                   </button>
-                  <button 
-                    type="button" 
-                    onClick={handleCloseForm} 
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
                     className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-lg transition-colors"
                   >
                     Cancelar
@@ -386,10 +439,10 @@ export default function Produtos_Catalogo(): React.JSX.Element {
           ) : (
             <>
               <div className="w-full bg-white rounded-xl mb-5 mt-7">
-                <SearchInput 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                  placeholder="Buscar produtos no banco de dados..." 
+                <SearchInput
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar produtos no banco de dados..."
                 />
               </div>
 
@@ -398,9 +451,9 @@ export default function Produtos_Catalogo(): React.JSX.Element {
                   Carregando produtos do banco de dados MySQL...
                 </div>
               ) : (
-                <ProductTable 
-                  products={filteredProducts} 
-                  onEdit={handleEdit} 
+                <ProductTable
+                  products={filteredProducts}
+                  onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
               )}

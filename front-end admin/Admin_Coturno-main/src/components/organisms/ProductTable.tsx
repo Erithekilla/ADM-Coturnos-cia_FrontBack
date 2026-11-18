@@ -64,7 +64,19 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 
                 {/* Preço de Custo */}
                 <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
-                  {Number(product.cost_price ?? product.costPrice ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  <div>{Number(product.cost_price ?? product.costPrice ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                  {Number(product.cost_price ?? product.costPrice ?? 0) > 0 && Number(product.price || 0) > 0 && (() => {
+                    const cost = Number(product.cost_price ?? product.costPrice ?? 0);
+                    const sale = Number(product.price || 0);
+                    const diffPercent = ((sale - cost) / cost) * 100;
+                    if (sale > cost) {
+                      return <span className="text-[11px] font-semibold text-emerald-600 block">+{diffPercent.toFixed(1)}% lucro</span>;
+                    }
+                    if (sale < cost) {
+                      return <span className="text-[11px] font-semibold text-rose-600 block">{diffPercent.toFixed(1)}% prejuízo</span>;
+                    }
+                    return null;
+                  })()}
                 </td>
                 
                 {/* Estoque */}

@@ -24,7 +24,10 @@
 *.env
 *.env.*
 
-.MPC
+.MCP
+.MCP/
+DOCUMENTACAO_PROJETO_COTURNOS.html
+DOCUMENTACAO_PROJETO_COTURNOS.pdf
 
 # Manter arquivos de exemplo e templates
 !.env.example
